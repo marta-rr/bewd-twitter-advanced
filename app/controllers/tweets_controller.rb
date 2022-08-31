@@ -5,13 +5,11 @@ class TweetsController < ApplicationController
   end
 
   def create
-    token = cookies.signed[:twitter_session_token]
-    session = Session.find_by(token: token)
-    user = session.user
-    @tweet = user.tweets.new(tweet_params)
-
+    if !current_user.pass_rate_limit?
+      return render 'tweets/rate_limit_error'
+    end
+    @tweet = current_user.tweets.new(tweet_params)
     if @tweet.save
-      TweetMailer.notify(@tweet).deliver! # invoke TweetMailer to send out the email when a tweet is successfully posted
       render 'tweets/create'
     end
   end
